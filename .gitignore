@@ -1,15 +1,35 @@
-# Intellij
+#java
+*.class
+
+#package file
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+#maven ignore
+target/
+build/
+
+#eclipse ignore
+.settings/
+.project
+.classpatch
+
+#Intellij idea
+.idea/
+/idea/
 *.ipr
 *.iml
 *.iws
-.idea/
 
-# Maven
-target/
-
-# Log file
+# temp file
 *.log
-log/
+*.cache
+*.diff
+*.patch
+*.tmp
 
-# out
-**/out/
+# system ignore
+.DS_Store
+Thumbs.db
