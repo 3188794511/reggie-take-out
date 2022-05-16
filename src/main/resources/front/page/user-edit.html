@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+        <title>修改个人信息</title>
+        <link rel="icon" href="../images/favico.ico">
+        <!--不同屏幕尺寸根字体设置-->
+        <script src="../js/base.js"></script>
+        <!--element-ui的样式-->
+        <link rel="stylesheet" href="../../backend/plugins/element-ui/index.css" />
+        <!--引入vant样式-->
+        <link rel="stylesheet" href="../styles/vant.min.css"/>
+        <!-- 引入样式  -->
+        <link rel="stylesheet" href="../styles/index.css" />
+        <!--本页面内容的样式-->
+        <link rel="stylesheet" href="../styles/login.css" />
+      </head>
+    <body>
+        <div id="user-edit">
+            <div class="divHead">个人信息修改</div>
+            <div class="divContainer">
+                <div class="divSplit"></div>
+                <el-input placeholder=" 请输入用户名" v-model="form.name"  maxlength='20'/></el-input>
+                <el-input placeholder=" 请输入身份证号" v-model="form.idNumber"  maxlength='20'/></el-input>
+                <el-radio v-model="form.sex" label="0">女</el-radio>
+                <el-radio v-model="form.sex" label="1">男</el-radio>
+            </div>
+            <el-button type="primary" @click="btnEdit">修改</el-button>
+        </div>
+        <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+        <script src="../../backend/plugins/vue/vue.js"></script>
+        <!-- 引入组件库 -->
+        <script src="../../backend/plugins/element-ui/index.js"></script>
+        <!-- 引入vant样式 -->
+        <script src="../js/vant.min.js"></script>
+        <!-- 引入axios -->
+        <script src="../../backend/plugins/axios/axios.min.js"></script>
+        <script src="../js/request.js"></script>
+        <script src="../api/login.js"></script>
+    </body>
+    <script>
+        new Vue({
+            el:"#user-edit",
+            data(){
+                return {
+                    imageUrl:'',
+                    form:{
+                        name:'',
+                        idNumber:'',
+                        sex:''
+                    },
+
+                }
+            },
+            computed:{},
+            created(){},
+            mounted(){},
+            methods:{
+                btnEdit(){
+                    if (this.form.name && this.form.idNumber && this.form.sex){
+                        if(this.validateIdCard(this.form.idNumber)){
+                            axios.put("/user/",this.form).then((res) => {
+                                if (res.data.code === 1){
+                                    $.message.success(res.data.msg)
+                                }
+                            })
+                            window.location.href = "/front/page/user.html"
+                        }
+                        else{
+                            this.$notify({ type:'warning', message:'请输入正确的身份证信息'});
+                        }
+                    }
+                    else{
+                        this.$notify({ type:'warning', message:'请输入完整信息'});
+                    }
+                },
+                validateIdCard(idCard) {
+            //15位和18位身份证号码的正则表达式
+            var regIdCard = /^(^[1-9]\d{7}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}$)|(^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])((\d{4})|\d{3}[Xx])$)$/;
+
+            //如果通过该验证，说明身份证格式正确，但准确性还需计算
+            if (!regIdCard.test(idCard)) {
+                return false;
+            }
+            if (idCard.length == 18) {
+                var idCardWi = new Array(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2); //将前17位加权因子保存在数组里
+                var idCardY = new Array(1, 0, 10, 9, 8, 7, 6, 5, 4, 3, 2); //这是除以11后，可能产生的11位余数、验证码，也保存成数组
+                var idCardWiSum = 0; //用来保存前17位各自乖以加权因子后的总和
+                for (var i = 0; i < 17; i++) {
+                    idCardWiSum += idCard.substring(i, i + 1) * idCardWi[i];
+                }
+
+                var idCardMod = idCardWiSum % 11; //计算出校验码所在数组的位置
+                var idCardLast = idCard.substring(17); //得到最后一位身份证号码
+
+                //如果等于2，则说明校验码是10，身份证号码最后一位应该是X
+                if (idCardMod == 2) {
+                    if (idCardLast == "X" || idCardLast == "x") {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    //用计算出的验证码与最后一位身份证号码匹配，如果一致，说明通过，否则是无效的身份证号码
+                    if (idCardLast == idCardY[idCardMod]) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+            }
+        })
+    </script>
+
+
+    <script>
+
+    </script>
+</html>
