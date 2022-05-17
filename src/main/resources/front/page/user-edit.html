@@ -18,11 +18,47 @@
         <!--本页面内容的样式-->
         <link rel="stylesheet" href="../styles/login.css" />
       </head>
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 178px;
+            height: 178px;
+            line-height: 178px;
+            text-align: center;
+        }
+        .avatar {
+            width: 178px;
+            height: 178px;
+            display: block;
+        }
+    </style>
     <body>
         <div id="user-edit">
-            <div class="divHead">个人信息修改</div>
+            <div class="divTitle">
+                <i class="el-icon-arrow-left" @click="goBack"></i>修改个人信息
+            </div>
             <div class="divContainer">
                 <div class="divSplit"></div>
+                <el-upload
+                        class="avatar-uploader"
+                        action="/common/upload"
+                        :show-file-list="false"
+                        :on-success="handleAvatarSuccess"
+                        :before-upload="beforeAvatarUpload">
+                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
                 <el-input placeholder=" 请输入用户名" v-model="form.name"  maxlength='20'/></el-input>
                 <el-input placeholder=" 请输入身份证号" v-model="form.idNumber"  maxlength='20'/></el-input>
                 <el-radio v-model="form.sex" label="0">女</el-radio>
@@ -48,17 +84,24 @@
                 return {
                     imageUrl:'',
                     form:{
-                        name:'',
-                        idNumber:'',
-                        sex:''
+
                     },
 
                 }
             },
             computed:{},
-            created(){},
+            created(){
+                this.initData()
+            },
             mounted(){},
             methods:{
+                initData(){
+                  axios.post("/user/userInfo").then((res) => {
+                      if (res.data.code === 1){
+                          this.form = res.data.data
+                      }
+                  })
+                },
                 btnEdit(){
                     if (this.form.name && this.form.idNumber && this.form.sex){
                         if(this.validateIdCard(this.form.idNumber)){
@@ -76,6 +119,25 @@
                     else{
                         this.$notify({ type:'warning', message:'请输入完整信息'});
                     }
+                },
+                goBack(){//返回上一个页面
+                    history.go(-1)
+                },
+                handleAvatarSuccess(res, file) {
+                    this.imageUrl = "/common/download?name="+res.data
+                    this.form.avatar = res.data
+                },
+                beforeAvatarUpload(file) {
+                    const isRightSize = file.type === 'image/jpeg';
+                    const isLt2M = file.size / 1024 / 1024 < 8;
+
+                    if (!isRightSize) {
+                        this.$message.error('上传头像图片只能是JPG!');
+                    }
+                    if (!isLt2M) {
+                        this.$message.error('上传头像图片大小不能超过 8MB!');
+                    }
+                    return isRightSize && isLt2M;
                 },
                 validateIdCard(idCard) {
             //15位和18位身份证号码的正则表达式

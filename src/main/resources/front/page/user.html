@@ -22,7 +22,7 @@
                 <i class="el-icon-arrow-left" @click="goBack"></i>个人中心
             </div>
             <div class="divUser">
-                <img src="./../images/headPage.png" @click="editUserInfo"/>
+                <img :src="imageUrl" class="avatar" @click="editUserInfo"/>
                 <div class="desc">
                     <div class="divName">{{user.name}}  <img v-if="user.sex == 0" src="./../images/women.png" /><img v-if="user.sex == 1" src="./../images/men.png" /></div>
                     <div class="divPhone">{{userPhone}}</div>
@@ -91,12 +91,9 @@
                         phone:'',
                         code:''
                     },
+                    imageUrl:'',
                     user:{
-                        name:'',
-                        phone:'',
-                        sex:'',
-                        idNumber:'',
-                        avatar:''
+
                     },
                     msgFlag:false,
                     order:[{
@@ -124,6 +121,7 @@
                     axios.post('/user/userInfo').then((res) => {
                         if (res.data.code === 1){
                             this.user = res.data.data
+                            this.imageUrl = '/common/download?name='+res.data.data.avatar
                         }
                     })
                 },
