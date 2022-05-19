@@ -6,9 +6,11 @@ import com.lj.common.CustomerException;
 import com.lj.dto.DishDto;
 import com.lj.entity.Dish;
 import com.lj.entity.DishFlavor;
+import com.lj.entity.SetmealDish;
 import com.lj.mapper.DishMapper;
 import com.lj.service.DishFlavorService;
 import com.lj.service.DishService;
+import com.lj.service.SetmealDishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import java.util.List;
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements DishService {
     @Autowired
     private DishFlavorService dishFlavorService;
+    @Autowired
+    private SetmealDishService setmealDishService;
     /**
      * 新增菜品(需要添加对应的菜品口味)
      * @param dishDto
@@ -81,6 +85,12 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             if (dish.getStatus() == 1){
                 throw new CustomerException("菜品正在售卖,无法删除");
             }
+        }
+        //再判断当前菜品是否被添加到了套餐中
+        LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        setmealDishLambdaQueryWrapper.in(SetmealDish::getDishId,ids);
+        if(setmealDishService.list(setmealDishLambdaQueryWrapper) != null){
+           throw new CustomerException("菜品已经添加到套餐中,无法删除");
         }
         //先删除口味,再删除菜品基本信息(先删除从表,再删除主表)
         LambdaQueryWrapper<DishFlavor> queryWrapper = new LambdaQueryWrapper<>();

@@ -146,7 +146,7 @@ public class SetmealController {
      * @return
      * @Cacheable 将方法的返回值存入缓存中,value 缓存名称 key redis的key unless 触发缓存的条件
      */
-    @Cacheable(value = "setmealCache",key = "#setmeal.categoryId + _ + #setmeal.status",unless = "#result == null")
+    @Cacheable(value = "setmealCache",key = "#setmeal.categoryId",unless = "#result == null")
     @GetMapping("/list")
     public R<List<SetmealDto>> list(Setmeal setmeal){
         //查询套餐基本信息
