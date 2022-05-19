@@ -2,6 +2,7 @@ package com.lj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lj.common.CustomerException;
 import com.lj.dto.DishDto;
 import com.lj.entity.Dish;
 import com.lj.entity.DishFlavor;
@@ -74,6 +75,13 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param ids
      */
     public void deleteByIds(Long[] ids) {
+        //先判断要删除的菜品中是否含有正在售卖的菜品
+        List<Dish> dishList = this.listByIds(Arrays.asList(ids));
+        for (Dish dish : dishList) {
+            if (dish.getStatus() == 1){
+                throw new CustomerException("菜品正在售卖,无法删除");
+            }
+        }
         //先删除口味,再删除菜品基本信息(先删除从表,再删除主表)
         LambdaQueryWrapper<DishFlavor> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ids.length > 0 && ids != null,DishFlavor::getDishId,ids);

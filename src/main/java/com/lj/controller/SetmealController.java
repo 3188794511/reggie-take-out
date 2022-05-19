@@ -15,6 +15,8 @@ import com.lj.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,9 +37,11 @@ public class SetmealController {
     
     /**
      * 新增套餐
+     * @CacheEvict 清除缓存数据 allEntries: 将缓存名为setmealCache的缓存数据全部清除
      * @param setmealDto
      * @return
      */
+    @CacheEvict(value = "setmealCache",allEntries = true)
     @PostMapping
     public R<String> save(@RequestBody SetmealDto setmealDto){
         setmealService.saveWithDish(setmealDto);
@@ -100,6 +104,7 @@ public class SetmealController {
      * @param setmealDto
      * @return
      */
+    @CacheEvict(value = "setmealCache",allEntries = true)
     @PutMapping
     public R<String> update(@RequestBody SetmealDto setmealDto){
         setmealService.updateWithDish(setmealDto);
@@ -107,10 +112,11 @@ public class SetmealController {
     }
     
     /**
-     * 批量删除菜品
+     * 批量删除套餐
      * @param ids
      * @return
      */
+    @CacheEvict(value = "setmealCache",allEntries = true)
     @DeleteMapping
     public R<String> delete(Long[] ids){
         setmealService.deleteWithDishByIds(ids);
@@ -123,6 +129,7 @@ public class SetmealController {
      * @param ids
      * @return
      */
+    @CacheEvict(value = "setmealCache",allEntries = true)
     @PostMapping("/status/{updateStatus}")
     public R<String> status(@PathVariable Integer updateStatus,Long[] ids){
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
@@ -137,7 +144,9 @@ public class SetmealController {
      * 条件查询套餐详细信息
      * @param setmeal
      * @return
+     * @Cacheable 将方法的返回值存入缓存中,value 缓存名称 key redis的key unless 触发缓存的条件
      */
+    @Cacheable(value = "setmealCache",key = "#setmeal.categoryId + _ + #setmeal.status",unless = "#result == null")
     @GetMapping("/list")
     public R<List<SetmealDto>> list(Setmeal setmeal){
         //查询套餐基本信息
