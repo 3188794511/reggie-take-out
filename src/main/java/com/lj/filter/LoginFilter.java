@@ -28,7 +28,11 @@ public class LoginFilter implements Filter {
                     "/employee/logout",
                     "/common/upload",
                     "/user/code",
-                    "/user/login"
+                    "/user/login",
+                    "/doc.html",
+                    "/webjars/**",
+                    "/swagger-resources",
+                    "/v2/api-docs"
                 };
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
