@@ -2,6 +2,7 @@ package com.lj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lj.common.CustomerException;
 import com.lj.dto.SetmealDto;
 import com.lj.entity.Setmeal;
 import com.lj.entity.SetmealDish;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,6 +68,13 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
      * @param ids
      */
     public void deleteWithDishByIds(Long[] ids) {
+        //判断套餐是否正在售卖
+        List<Setmeal> setmealList = this.listByIds(Arrays.asList(ids));
+        for (Setmeal setmeal : setmealList) {
+            if (setmeal.getStatus() == 1){
+                throw new CustomerException("套餐正在售卖中,无法删除");
+            }
+        }
         for (Long id : ids) {
             //先删除从表setmeal_dish数据
             LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();

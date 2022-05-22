@@ -28,7 +28,11 @@ public class LoginFilter implements Filter {
                     "/employee/logout",
                     "/common/upload",
                     "/user/code",
-                    "/user/login"
+                    "/user/login",
+                    "/doc.html",
+                    "/webjars/**",
+                    "/swagger-resources",
+                    "/v2/api-docs"
                 };
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
@@ -46,9 +50,8 @@ public class LoginFilter implements Filter {
             BaseContext.setCurrenId((Long) request.getSession().getAttribute("employee"));
             //员工session不为空,放行
             filterChain.doFilter(request,response);
-           return;
+            return;
         }
-    
         if(request.getSession().getAttribute("user") != null){
             //将员工的id存储到当前线程中
             BaseContext.setCurrenId((Long) request.getSession().getAttribute("user"));
@@ -56,7 +59,6 @@ public class LoginFilter implements Filter {
             filterChain.doFilter(request,response);
             return;
         }
-        
         //员工session为空,不放行
         response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));//返回响应信息
         return;

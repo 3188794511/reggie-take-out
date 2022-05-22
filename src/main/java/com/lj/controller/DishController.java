@@ -12,9 +12,12 @@ import com.lj.service.DishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +33,8 @@ public class DishController {
     private DishFlavorService dishFlavorService;
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private RedisTemplate redisTemplate;
     /**
      * 新增菜品
      * @param dishDto
@@ -37,7 +42,9 @@ public class DishController {
      */
     @PostMapping
     public R<String> add(@RequestBody DishDto dishDto){
-        log.info(dishDto.toString());
+        //清除缓存中的数据
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        redisTemplate.delete(key);
         //调用业务方法
         dishService.add(dishDto);
         return R.success("菜品新增成功");
@@ -99,6 +106,9 @@ public class DishController {
      */
     @PutMapping
     public R<String> edit(@RequestBody DishDto dishDto){
+        //清除缓存中的数据
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        redisTemplate.delete(key);
         //修改菜品基本信息
         dishService.updateById(dishDto);
         //修改菜品口味信息
@@ -121,6 +131,14 @@ public class DishController {
      */
     @PostMapping("/status/{updateStatus}")
     public R<String> status(@PathVariable Integer updateStatus,Long[] ids){
+        List<Dish> dishList = dishService.listByIds(Arrays.asList(ids));
+        //批量获取缓存中的key
+        List<String> keys = dishList.stream().map((item) -> {
+            String key = "dish_" + item.getCategoryId() + "_1";
+            return key;
+        }).collect(Collectors.toList());
+        //批量删除缓存中的数据
+        redisTemplate.delete(keys);
         dishService.updateStatusByIds(updateStatus, ids);
         return R.success("菜品状态修改成功");
     }
@@ -132,6 +150,14 @@ public class DishController {
      */
     @DeleteMapping
     public R<String> delete(Long[] ids){
+        List<Dish> dishList = dishService.listByIds(Arrays.asList(ids));
+        //批量获取缓存中的key
+        List<String> keys = dishList.stream().map((item) -> {
+            String key = "dish_" + item.getCategoryId() + "_1";
+            return key;
+        }).collect(Collectors.toList());
+        //批量删除缓存中的数据
+        redisTemplate.delete(keys);
         dishService.deleteByIds(ids);
         return R.success("菜品删除成功");
     }
@@ -144,6 +170,15 @@ public class DishController {
      */
     @GetMapping("/list")
     public R<List<DishDto>> list(Dish dish){
+        List<DishDto> dishDtoList = null;
+        //先从缓存中获取
+        String key = "dish_" + dish.getCategoryId() + "_" +dish.getStatus();
+        dishDtoList = (List<DishDto>) redisTemplate.opsForValue().get(key);
+        if (dishDtoList != null && dishDtoList.size() > 0){
+            //缓存中有数据
+            return R.success(dishDtoList);
+        }
+        //换存中没有数据,查询数据库
         //查询菜品基本信息
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Dish::getCategoryId,dish.getCategoryId())
@@ -151,7 +186,7 @@ public class DishController {
                         .orderByAsc(Dish::getSort)
                         .orderByDesc(Dish::getUpdateTime);
         List<Dish> dishList = dishService.list(queryWrapper);
-        List<DishDto> dishDtoList = dishList.stream().map((item) -> {
+        dishDtoList = dishList.stream().map((item) -> {
             DishDto dishDto = new DishDto();
             BeanUtils.copyProperties(item,dishDto);
             //封装菜品属性
@@ -163,6 +198,8 @@ public class DishController {
             dishDto.setFlavors(dishFlavors);
             return dishDto;
         }).collect(Collectors.toList());
+        //将查询出来的数据放入缓存中
+        redisTemplate.opsForValue().set(key,dishDtoList,60, TimeUnit.MINUTES);//一小时过期
         return R.success(dishDtoList);
     }
     
